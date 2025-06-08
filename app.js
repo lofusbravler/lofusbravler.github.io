@@ -1,6 +1,11 @@
-// Инициализация Telegram WebApp
-const tg = window.Telegram.WebApp;
-tg.expand();
+// Проверяем, открыто ли в Telegram WebView
+const isTelegram = window.Telegram && window.Telegram.WebApp;
+
+if (isTelegram) {
+    // Если в Telegram - инициализируем WebApp
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+}
 
 // Данные товаров
 const products = [
@@ -45,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Рендер товаров
 function renderProducts() {
     const productsContainer = document.querySelector('.products');
-    productsContainer.innerHTML = ''; // Очищаем перед рендером
+    productsContainer.innerHTML = '';
     
     products.forEach(product => {
         const productElement = document.createElement('div');
@@ -66,7 +71,7 @@ function renderProducts() {
         productsContainer.appendChild(productElement);
     });
     
-    // Добавляем обработчики для кнопок +/-
+    // Обработчики для кнопок +/-
     document.querySelectorAll('.plus').forEach(btn => {
         btn.addEventListener('click', () => addToCart(parseInt(btn.dataset.id)));
     });
@@ -130,7 +135,6 @@ function updateCartInfo() {
 function checkout() {
     if (cart.length === 0) return;
     
-    // Формируем данные для отправки
     const orderData = {
         products: cart.map(item => ({
             id: item.product.id,
@@ -139,12 +143,22 @@ function checkout() {
             quantity: item.quantity
         })),
         total: cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0),
-        user: tg.initDataUnsafe.user || {}
+        date: new Date().toISOString()
     };
     
-    // Отправляем данные обратно в бота
-    tg.sendData(JSON.stringify(orderData));
-    
-    // Закрываем WebApp (опционально)
-    tg.close();
+    if (isTelegram) {
+        // Если в Telegram - отправляем данные в бота
+        window.Telegram.WebApp.sendData(JSON.stringify(orderData));
+        window.Telegram.WebApp.close();
+    } else {
+        // Если не в Telegram - просто показываем информацию
+        alert(`Заказ оформлен!\nТоваров: ${orderData.products.length}\nСумма: ${orderData.total} ₽\n\nДанные заказа:\n${JSON.stringify(orderData, null, 2)}`);
+        
+        // Можно добавить сохранение в localStorage
+        localStorage.setItem('lastOrder', JSON.stringify(orderData));
+        
+        // Очищаем корзину
+        cart = [];
+        updateCartInfo();
+    }
 }
