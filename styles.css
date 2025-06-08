@@ -4,11 +4,14 @@ body {
     padding: 0;
     background-color: #f8f8f8;
     color: #333;
+    height: 100vh;
 }
 
 .container {
     max-width: 100%;
     padding: 15px;
+    height: 100%;
+    position: relative;
 }
 
 header {
@@ -23,11 +26,24 @@ header {
 h1 {
     font-size: 20px;
     margin: 0;
+    text-align: center;
+    flex-grow: 1;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    padding: 5px;
+    cursor: pointer;
 }
 
 .cart-info {
     font-size: 16px;
     font-weight: bold;
+    display: flex;
+    gap: 5px;
+    cursor: pointer;
 }
 
 .products {
@@ -97,6 +113,79 @@ h1 {
     font-size: 14px;
 }
 
+.cart-items {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.cart-item {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.cart-item-img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.cart-item-info {
+    flex-grow: 1;
+}
+
+.cart-item-title {
+    font-size: 14px;
+    margin: 0 0 5px 0;
+    font-weight: 500;
+}
+
+.cart-item-price {
+    font-size: 14px;
+    color: #0088cc;
+}
+
+.cart-item-quantity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.order-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.form-group input, .form-group textarea {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+
 .checkout-btn {
     width: 100%;
     padding: 12px;
@@ -108,6 +197,7 @@ h1 {
     font-weight: bold;
     cursor: pointer;
     transition: background 0.2s;
+    margin-top: 10px;
 }
 
 .checkout-btn:disabled {
@@ -117,4 +207,27 @@ h1 {
 
 .checkout-btn:not(:disabled):hover {
     background: #0077b3;
+}
+
+.hidden {
+    display: none;
+}
+
+.confirmation-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    gap: 15px;
+}
+
+#order-summary {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    width: 100%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    text-align: left;
 }
