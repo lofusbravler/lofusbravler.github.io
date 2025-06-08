@@ -3,25 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Mini Shop</title>
+    <title>Telegram Shop</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>🛍️ Магазин в Telegram</h1>
-            <div class="cart-info">
-                <span id="cart-count">0</span> 🛒
-                <span id="cart-total">0 ₽</span>
-            </div>
-        </header>
+        <!-- Экран товаров -->
+        <div id="products-screen">
+            <header>
+                <h1>🛍️ Магазин</h1>
+                <div class="cart-info" id="cart-btn">
+                    <span id="cart-count">0</span> 🛒
+                    <span id="cart-total">0 ₽</span>
+                </div>
+            </header>
 
-        <div class="products">
-            <!-- Товары будут добавлены через JS -->
+            <div class="products" id="products-list">
+                <!-- Товары будут здесь -->
+            </div>
         </div>
 
-        <button id="checkout-btn" class="checkout-btn">Оформить заказ</button>
+        <!-- Экран корзины -->
+        <div id="cart-screen" class="hidden">
+            <header>
+                <button id="back-to-products" class="back-btn">←</button>
+                <h1>🛒 Корзина</h1>
+                <div class="cart-info">
+                    <span id="cart-total-cart">0 ₽</span>
+                </div>
+            </header>
+
+            <div class="cart-items" id="cart-items-list">
+                <!-- Товары в корзине будут здесь -->
+            </div>
+
+            <button id="proceed-to-checkout" class="checkout-btn">Оформить заказ</button>
+        </div>
+
+        <!-- Экран оформления заказа -->
+        <div id="checkout-screen" class="hidden">
+            <header>
+                <button id="back-to-cart" class="back-btn">←</button>
+                <h1>📝 Оформление</h1>
+            </header>
+
+            <form id="order-form" class="order-form">
+                <div class="form-group">
+                    <label for="name">Имя:</label>
+                    <input type="text" id="name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="phone">Телефон:</label>
+                    <input type="tel" id="phone" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="address">Адрес (если требуется):</label>
+                    <input type="text" id="address">
+                </div>
+                
+                <div class="form-group">
+                    <label for="comments">Комментарий к заказу:</label>
+                    <textarea id="comments" rows="3"></textarea>
+                </div>
+
+                <button type="submit" class="checkout-btn">Подтвердить заказ</button>
+            </form>
+        </div>
+
+        <!-- Экран подтверждения -->
+        <div id="confirmation-screen" class="hidden">
+            <div class="confirmation-content">
+                <h1>✅ Заказ оформлен!</h1>
+                <p>Спасибо за ваш заказ!</p>
+                <p>Мы свяжемся с вами в ближайшее время.</p>
+                <div id="order-summary"></div>
+                <button id="close-app" class="checkout-btn">Закрыть</button>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>
