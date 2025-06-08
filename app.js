@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Рендер товаров
 function renderProducts() {
     const productsContainer = document.querySelector('.products');
+    productsContainer.innerHTML = ''; // Очищаем перед рендером
     
     products.forEach(product => {
         const productElement = document.createElement('div');
@@ -111,17 +112,13 @@ function removeFromCart(productId) {
 
 // Обновление информации о корзине
 function updateCartInfo() {
-    // Обновляем счетчик и сумму
     const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
     const totalSum = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
     
     document.getElementById('cart-count').textContent = totalCount;
     document.getElementById('cart-total').textContent = totalSum + ' ₽';
-    
-    // Обновляем кнопку оформления
     document.getElementById('checkout-btn').disabled = totalCount === 0;
     
-    // Обновляем количество у каждого товара
     document.querySelectorAll('.quantity').forEach(el => {
         const productId = parseInt(el.dataset.id);
         const cartItem = cart.find(item => item.product.id === productId);
@@ -134,19 +131,20 @@ function checkout() {
     if (cart.length === 0) return;
     
     // Формируем данные для отправки
-    const order = {
-        products: cart,
+    const orderData = {
+        products: cart.map(item => ({
+            id: item.product.id,
+            name: item.product.name,
+            price: item.product.price,
+            quantity: item.quantity
+        })),
         total: cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0),
-        user: tg.initDataUnsafe.user
+        user: tg.initDataUnsafe.user || {}
     };
     
-    // В реальном приложении здесь был бы запрос к вашему серверу
-    console.log('Order data:', order);
+    // Отправляем данные обратно в бота
+    tg.sendData(JSON.stringify(orderData));
     
-    // Показываем подтверждение в Telegram
-    tg.showAlert('Спасибо за заказ! Мы скоро с вами свяжемся.', () => {
-        // Очищаем корзину после успешного заказа
-        cart = [];
-        updateCartInfo();
-    });
+    // Закрываем WebApp (опционально)
+    tg.close();
 }
