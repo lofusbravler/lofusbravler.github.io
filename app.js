@@ -2,9 +2,9 @@
 const isTelegram = window.Telegram && window.Telegram.WebApp;
 
 if (isTelegram) {
-    // Если в Telegram - инициализируем WebApp
     const tg = window.Telegram.WebApp;
     tg.expand();
+    tg.enableClosingConfirmation();
 }
 
 // Данные товаров
@@ -38,18 +38,33 @@ const products = [
 // Корзина
 let cart = [];
 
+// DOM элементы
+const screens = {
+    products: document.getElementById('products-screen'),
+    cart: document.getElementById('cart-screen'),
+    checkout: document.getElementById('checkout-screen'),
+    confirmation: document.getElementById('confirmation-screen')
+};
+
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', () => {
     renderProducts();
     updateCartInfo();
     
-    // Обработчик кнопки оформления заказа
-    document.getElementById('checkout-btn').addEventListener('click', checkout);
+    // Обработчики навигации
+    document.getElementById('cart-btn').addEventListener('click', showCart);
+    document.getElementById('back-to-products').addEventListener('click', showProducts);
+    document.getElementById('proceed-to-checkout').addEventListener('click', showCheckout);
+    document.getElementById('back-to-cart').addEventListener('click', showCart);
+    document.getElementById('close-app').addEventListener('click', closeApp);
+    
+    // Обработчик формы
+    document.getElementById('order-form').addEventListener('submit', processOrder);
 });
 
 // Рендер товаров
 function renderProducts() {
-    const productsContainer = document.querySelector('.products');
+    const productsContainer = document.getElementById('products-list');
     productsContainer.innerHTML = '';
     
     products.forEach(product => {
@@ -79,6 +94,57 @@ function renderProducts() {
     document.querySelectorAll('.minus').forEach(btn => {
         btn.addEventListener('click', () => removeFromCart(parseInt(btn.dataset.id)));
     });
+}
+
+// Рендер корзины
+function renderCart() {
+    const cartContainer = document.getElementById('cart-items-list');
+    cartContainer.innerHTML = '';
+    
+    if (cart.length === 0) {
+        cartContainer.innerHTML = '<p>Корзина пуста</p>';
+        document.getElementById('proceed-to-checkout').disabled = true;
+        return;
+    }
+    
+    cart.forEach(item => {
+        const cartItemElement = document.createElement('div');
+        cartItemElement.className = 'cart-item';
+        cartItemElement.innerHTML = `
+            <img src="${item.product.image}" alt="${item.product.name}" class="cart-item-img">
+            <div class="cart-item-info">
+                <h3 class="cart-item-title">${item.product.name}</h3>
+                <div class="cart-item-price">${item.product.price} ₽ × ${item.quantity} = ${item.product.price * item.quantity} ₽</div>
+            </div>
+            <div class="cart-item-quantity">
+                <button class="quantity-btn minus" data-id="${item.product.id}">-</button>
+                <span>${item.quantity}</span>
+                <button class="quantity-btn plus" data-id="${item.product.id}">+</button>
+            </div>
+        `;
+        
+        cartContainer.appendChild(cartItemElement);
+    });
+    
+    // Обновляем кнопки +/- в корзине
+    document.querySelectorAll('.cart-item .plus').forEach(btn => {
+        btn.addEventListener('click', () => {
+            addToCart(parseInt(btn.dataset.id));
+            renderCart();
+        });
+    });
+    
+    document.querySelectorAll('.cart-item .minus').forEach(btn => {
+        btn.addEventListener('click', () => {
+            removeFromCart(parseInt(btn.dataset.id));
+            renderCart();
+        });
+    });
+    
+    // Обновляем общую сумму в корзине
+    const total = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    document.getElementById('cart-total-cart').textContent = `${total} ₽`;
+    document.getElementById('proceed-to-checkout').disabled = false;
 }
 
 // Добавление товара в корзину
@@ -121,8 +187,7 @@ function updateCartInfo() {
     const totalSum = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
     
     document.getElementById('cart-count').textContent = totalCount;
-    document.getElementById('cart-total').textContent = totalSum + ' ₽';
-    document.getElementById('checkout-btn').disabled = totalCount === 0;
+    document.getElementById('cart-total').textContent = `${totalSum} ₽`;
     
     document.querySelectorAll('.quantity').forEach(el => {
         const productId = parseInt(el.dataset.id);
@@ -131,11 +196,55 @@ function updateCartInfo() {
     });
 }
 
-// Оформление заказа
-function checkout() {
-    if (cart.length === 0) return;
+// Навигация по экранам
+function showScreen(screen) {
+    Object.values(screens).forEach(s => s.classList.add('hidden'));
+    screen.classList.remove('hidden');
+}
+
+function showProducts() {
+    showScreen(screens.products);
+}
+
+function showCart() {
+    renderCart();
+    showScreen(screens.cart);
+}
+
+function showCheckout() {
+    showScreen(screens.checkout);
+}
+
+function showConfirmation(orderData) {
+    const summaryElement = document.getElementById('order-summary');
+    summaryElement.innerHTML = `
+        <h3>Детали заказа:</h3>
+        <p><strong>Имя:</strong> ${orderData.name}</p>
+        <p><strong>Телефон:</strong> ${orderData.phone}</p>
+        ${orderData.address ? `<p><strong>Адрес:</strong> ${orderData.address}</p>` : ''}
+        ${orderData.comments ? `<p><strong>Комментарий:</strong> ${orderData.comments}</p>` : ''}
+        <hr>
+        <h3>Товары:</h3>
+        <ul>
+            ${orderData.products.map(item => `
+                <li>${item.name} - ${item.quantity} × ${item.price} ₽ = ${item.quantity * item.price} ₽</li>
+            `).join('')}
+        </ul>
+        <hr>
+        <p><strong>Итого:</strong> ${orderData.total} ₽</p>
+    `;
+    showScreen(screens.confirmation);
+}
+
+// Обработка заказа
+function processOrder(e) {
+    e.preventDefault();
     
     const orderData = {
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        address: document.getElementById('address').value,
+        comments: document.getElementById('comments').value,
         products: cart.map(item => ({
             id: item.product.id,
             name: item.product.name,
@@ -147,18 +256,56 @@ function checkout() {
     };
     
     if (isTelegram) {
-        // Если в Telegram - отправляем данные в бота
-        window.Telegram.WebApp.sendData(JSON.stringify(orderData));
-        window.Telegram.WebApp.close();
-    } else {
-        // Если не в Telegram - просто показываем информацию
-        alert(`Заказ оформлен!\nТоваров: ${orderData.products.length}\nСумма: ${orderData.total} ₽\n\nДанные заказа:\n${JSON.stringify(orderData, null, 2)}`);
+        // Отправляем данные в бота
+        const tg = window.Telegram.WebApp;
         
-        // Можно добавить сохранение в localStorage
-        localStorage.setItem('lastOrder', JSON.stringify(orderData));
+        // Формируем сообщение для администратора
+        const adminMessage = formatAdminMessage(orderData);
+        
+        // Отправляем данные
+        tg.sendData(JSON.stringify({
+            ...orderData,
+            admin_message: adminMessage
+        }));
+        
+        // Показываем подтверждение
+        showConfirmation(orderData);
+    } else {
+        // В браузере просто показываем подтверждение
+        showConfirmation(orderData);
+        
+        // Можно добавить отправку на email или сохранение в базу
+        console.log('Order data:', orderData);
         
         // Очищаем корзину
         cart = [];
         updateCartInfo();
+    }
+}
+
+// Форматирование сообщения для администратора
+function formatAdminMessage(orderData) {
+    return `
+🛍 *Новый заказ* 🛍
+
+👤 *Клиент:* ${orderData.name}
+📞 *Телефон:* ${orderData.phone}
+${orderData.address ? `🏠 *Адрес:* ${orderData.address}\n` : ''}
+${orderData.comments ? `💬 *Комментарий:* ${orderData.comments}\n` : ''}
+
+📦 *Товары:*
+${orderData.products.map(item => `- ${item.name} (${item.price} ₽) × ${item.quantity} = ${item.price * item.quantity} ₽`).join('\n')}
+
+💰 *Итого:* ${orderData.total} ₽
+📅 ${new Date(orderData.date).toLocaleString()}
+    `;
+}
+
+function closeApp() {
+    if (isTelegram) {
+        window.Telegram.WebApp.close();
+    } else {
+        showProducts();
+        document.getElementById('order-form').reset();
     }
 }
